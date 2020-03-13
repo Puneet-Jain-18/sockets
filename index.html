@@ -44,13 +44,6 @@
         SelectedFile = evnt.target.files[0];
 		document.getElementById('NameBox').value = SelectedFile.name;
 	}
-	
-
-	document.getElementById('resumeButton').addEventListener('click',()=>{
-		console.log("HEYYYYYYYYYYYYYYY")
-	} );
-
-
     var socket = io.connect('http://localhost:8080');
 	var FReader,FReader2;
 	var Name;
@@ -89,25 +82,30 @@
 			console.log("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
 			FReader2 = new FileReader();
 			Name = document.getElementById('NameBox').value;
-			var Content = "<span id='NameArea'>Uploading " + SelectedFile.name + " as " + Name + "</span>";
-			Content += '<div id="ProgressContainer"><div id="ProgressBar"></div></div><span id="percent">0%</span>';
-			Content += "<span id='Uploaded'> - <span id='MB'>0</span>/" + Math.round(SelectedFile.size / 1048576) + "MB</span>";
-            
-			document.getElementById('UploadArea2').innerHTML = Content;
 			//console.log(Content);
-			FReader2.load = function(evnt){
-				console.loh("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-				socket.emit('Upload', { 'Name' : Name, Data : evnt.target.result });
-			}
-			
-			socket.emit('Start', { 'Name' : Name, 'Size' : SelectedFile.size });
+			socket.emit('Resume', { 'Name' : Name, 'Size' : SelectedFile.size });
 		}
 		else
 		{
 			alert("Please Select A File");
 		}
     }
-
+	socket.on('ResumeTransmission',function(data){
+		console.log("HOOGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+		console.log("REached More Dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+		UpdateBar(data['Percent']);
+		console.log(data['Place'],SelectedFile)
+		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
+		var NewFile; //The Variable that will hold the new Block of Data
+		NewFile = SelectedFile.slice(Place, Place + Math.min(524288, (SelectedFile.size-Place)));
+		FReader.onload = function(evnt){
+			console.log("RESSSSSSSSSSSSSSSSSS",FReader.result)
+				socket.emit('Upload2', { 'Name' : Name, Data : evnt.target.result });
+			}
+		console.log(NewFile);
+		FReader.readAsBinaryString(NewFile);
+        console.log(data['Percent']);
+	})
     socket.on('MoreData', function (data){
 		console.log("REached More Dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 		UpdateBar(data['Percent']);

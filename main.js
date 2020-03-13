@@ -60,6 +60,41 @@
 				}
 			});
     });
+    socket.on('Resume',function(data){
+        console.log("Reached Resume");
+        console.log("REached Socket Start");
+        var Name = data['Name'];
+        console.log(data['Name'],data['Size'])
+        Files[Name] = {  //Create a new Entry in The Files Variable
+            FileSize : data['Size'],
+            Data	 : "",
+            Downloaded : 0
+        }
+        var Place = 0;
+        try{
+            var Stat = fs.statSync('Temp/' +  Name);
+            if(Stat.isFile())
+            {
+                Files[Name]['Downloaded'] = Stat.size;
+                Place = Stat.size / 524288;
+            }
+        }
+          catch(er){} //It's a New File
+        fs.open("./Temp/" + Name, "a", 0755, function(err, fd){
+            if(err)
+            {
+                console.log(err);
+            }
+            else
+            {
+                Files[Name]['Handler'] = fd; //We store the file handler so we can write to it later
+                console.log("EMITTING FOR MORE DATA",Place);
+                socket.emit('ResumeTransmission', { 'Place' : Place, Percent : 0 });
+            }
+        });
+       // socket.emit('ResumeTransmission');
+
+    })
    
 
 
@@ -98,6 +133,38 @@ socket.on('Upload', function (data){
     }
 });
 
+socket.on('Upload2', function (data){
+    console.log("Dusra vala")
+    var Name = data['Name'];
+    Files[Name]['Downloaded'] += data['Data'].length;
+    Files[Name]['Data'] += data['Data'];
+    if(Files[Name]['Downloaded'] == Files[Name]['FileSize']) //If File is Fully Uploaded
+    {
+        console.log("COMPLETEEEEE")
+        var Place = Files[Name]['Downloaded'] / 524288;
+            var Percent = (Files[Name]['Downloaded'] / Files[Name]['FileSize']) * 100;
+            socket.emit('Done', { 'Place' : Place, 'Percent' :  Percent});
+       
+        fs.write(Files[Name]['Handler'], Files[Name]['Data'], null, 'Binary', function(err, Writen){
+            //Get Thumbnail Here
+        });
+    }
+    else if(Files[Name]['Data'].length > 10485760){ //If the Data Buffer reaches 10MB
+        fs.write(Files[Name]['Handler'], Files[Name]['Data'], null, 'Binary', function(err, Writen){
+            Files[Name]['Data'] = ""; //Reset The Buffer
+            var Place = Files[Name]['Downloaded'] / 524288;
+            var Percent = (Files[Name]['Downloaded'] / Files[Name]['FileSize']) * 100;
+            socket.emit('ResumeTransmission', { 'Place' : Place, 'Percent' :  Percent});
+        });
+    }
+    else
+    {
+        var Place = Files[Name]['Downloaded'] / 524288;
+        console.log(Files[Name]['Downloaded'], Files[Name]['FileSize'])
+        var Percent = (Files[Name]['Downloaded'] / Files[Name]['FileSize']) * 100;
+        socket.emit('ResumeTransmission', { 'Place' : Place, 'Percent' :  Percent});
+    }
+});
 
     });
    
