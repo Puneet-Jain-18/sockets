@@ -45,7 +45,7 @@
 		document.getElementById('NameBox').value = SelectedFile.name;
 	}
     var socket = io.connect('http://localhost:8080');
-	var FReader,FReader2;
+	var FReader;
 	var Name;
 	function StartUpload(){
 		//console.log("StartUpload called",document.getElementById('FileBox').value)
@@ -71,41 +71,12 @@
 		}
     }
 	document.getElementById('restartButton').addEventListener('click',()=>{
-		socket.off("MoreData");
+		socket.disconnect();
+		socket.connect();
 	} );
 
-	document.getElementById('resumeButton').addEventListener('click',resumeUpload );
-	function resumeUpload(){
-		//console.log("StartUpload called",document.getElementById('FileBox').value)
-		if(document.getElementById('FileBox').value != "")
-		{
-			console.log("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-			FReader2 = new FileReader();
-			Name = document.getElementById('NameBox').value;
-			//console.log(Content);
-			socket.emit('Resume', { 'Name' : Name, 'Size' : SelectedFile.size });
-		}
-		else
-		{
-			alert("Please Select A File");
-		}
-    }
-	socket.on('ResumeTransmission',function(data){
-		console.log("HOOGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-		console.log("REached More Dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-		UpdateBar(data['Percent']);
-		console.log(data['Place'],SelectedFile)
-		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
-		var NewFile; //The Variable that will hold the new Block of Data
-		NewFile = SelectedFile.slice(Place, Place + Math.min(524288, (SelectedFile.size-Place)));
-		FReader.onload = function(evnt){
-			console.log("RESSSSSSSSSSSSSSSSSS",FReader.result)
-				socket.emit('Upload2', { 'Name' : Name, Data : evnt.target.result });
-			}
-		console.log(NewFile);
-		FReader.readAsBinaryString(NewFile);
-        console.log(data['Percent']);
-	})
+	document.getElementById('resumeButton').addEventListener('click',StartUpload );
+	
     socket.on('MoreData', function (data){
 		console.log("REached More Dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 		UpdateBar(data['Percent']);
