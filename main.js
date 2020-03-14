@@ -11,7 +11,7 @@
 
 
 	function handler (req, res) {
-        fs.readFile(__dirname + '/index.html',
+        fs.readFile(__dirname + '/frontend/index.html',
         function (err, data) {
           if (err) {
             res.writeHead(500);

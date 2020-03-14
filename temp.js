@@ -1,34 +1,4 @@
-<html>
-    
-<head>
-    <script src="/socket.io/socket.io.js"></script>
-</head>
-<body> 
-    <div id="UploadBox">
-        <h2>Video Uploader</h2>
-        <span id='UploadArea'>
-            <label for="FileBox">Choose A File: </label><input type="file" id="FileBox"><br>
-            <label for="NameBox">Name: </label><input type="text" id="NameBox"><br>
-
-            <button	type='button' id='UploadButton' class='Button'>Upload</button>
-        </span>
-    </div>
-    <div>
-		<button type = "button" id = "restartButton">Pause</button>
-		
-		<button type = "button" id = "resumeButton">Resume</button>
-		
-        <button type = "button" id = "terminateButton">STOP</button>
-    </div>
-    <div id = "UploadArea2">
-
-    </div>
-</body>
-
-</html>
-
-<script>
-    	window.addEventListener("load", Ready); 
+window.addEventListener("load", Ready); 
 	
 	function Ready(){ 
 		if(window.File && window.FileReader){ //These are the relevant HTML5 objects that we are going to use 
@@ -39,14 +9,14 @@
 		{
 			document.getElementById('UploadArea').innerHTML = "Your Browser Doesn't Support The File API Please Update Your Browser";
 		}
-    }
-    
-    var SelectedFile;
+	}
+	
+	var SelectedFile;
 	function FileChosen(evnt) {
-        SelectedFile = evnt.target.files[0];
+		SelectedFile = evnt.target.files[0];
 		document.getElementById('NameBox').value = SelectedFile.name;
 	}
-    var socket = io.connect('http://localhost:8080');
+	var socket = io.connect('http://localhost:8080');
 	var FReader;
 	var Name;
 	function StartUpload(){
@@ -55,10 +25,9 @@
 		{
 			FReader = new FileReader();
 			Name = document.getElementById('NameBox').value;
-			var Content = "<span id='NameArea'>Uploading " + SelectedFile.name + " as " + Name + "</span>";
-			Content += '<div id="ProgressContainer"><div id="ProgressBar"></div></div><span id="percent">0%</span>';
+			var Content = '<div id="ProgressContainer"><div id="ProgressBar"></div></div><span id="percent">0%</span>';
 			Content += "<span id='Uploaded'> - <span id='MB'>0</span>/" + Math.round(SelectedFile.size / 1048576) + "MB</span>";
-            
+			
 			document.getElementById('UploadArea2').innerHTML = Content;
 			console.log(Content);
 			FReader.onload = function(evnt){
@@ -71,7 +40,7 @@
 		{
 			alert("Please Select A File");
 		}
-    }
+	}
 	document.getElementById('restartButton').addEventListener('click',()=>{
 		socket.disconnect();
 		socket.connect();
@@ -80,10 +49,10 @@
 		socket.emit('Terminate',{'Name' : Name})
 		document.getElementById('UploadArea2').innerHTML = "File Transfer Terminated Successfully.";
 	} );
-
+	
 	document.getElementById('resumeButton').addEventListener('click',StartUpload );
 	
-    socket.on('MoreData', function (data){
+	socket.on('MoreData', function (data){
 		console.log("REached More Dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 		UpdateBar(data['Percent']);
 		var Place = data['Place'] * 1024000; //The Next Blocks Starting Position
@@ -92,8 +61,8 @@
 			NewFile = SelectedFile.slice(Place, Place + Math.min(1024000, (SelectedFile.size-Place)));
 		else
 			NewFile = SelectedFile.slice(Place, Place + Math.min(1024000, (SelectedFile.size-Place)));
-        FReader.readAsBinaryString(NewFile);
-        console.log(data['Percent']);
+		FReader.readAsBinaryString(NewFile);
+		console.log(data['Percent']);
 	});
 	
 	function UpdateBar(percent){
@@ -102,19 +71,16 @@
 		var MBDone = Math.round(((percent/100.0) * SelectedFile.size) / 1048576);
 		document.getElementById('MB').innerHTML = MBDone;
 	}
-    
-
-    var Path = "http://localhost/";
+	
+	
+	var Path = "http://localhost/";
 	
 	socket.on('Done', function (data){
 		UpdateBar(data['Percent']);
-		var Content = "Video Successfully Uploaded !!"
-		Content += "<img id='Thumb' src='" + Path + data['Image'] + "' alt='" + Name + "'><br>";
-		Content += "<button	type='button' name='Upload' value='' id='Restart' class='Button'>Upload Another</button>";
+		var Content = "File Successfully Uploaded !!"
 		document.getElementById('UploadArea').innerHTML = Content;
 		document.getElementById('Restart').addEventListener('click', Refresh);
 	});
 	function Refresh(){
 		location.reload(true);
 	}
-</script>
