@@ -43,7 +43,7 @@
 				if(Stat.isFile())
 				{
 					Files[Name]['Downloaded'] = Stat.size;
-					Place = Stat.size / 524288;
+					Place = Stat.size / 1024000;
 				}
 			}
 	  		catch(er){} //It's a New File
@@ -67,33 +67,47 @@ socket.on('Upload', function (data){
     var Name = data['Name'];
     Files[Name]['Downloaded'] += data['Data'].length;
     Files[Name]['Data'] += data['Data'];
-    if(Files[Name]['Downloaded'] == Files[Name]['FileSize']) //If File is Fully Uploaded
+    if(Files[Name]['Downloaded'] >= Files[Name]['FileSize']) //If File is Fully Uploaded
     {
         console.log("COMPLETEEEEE")
-        var Place = Files[Name]['Downloaded'] / 524288;
-            var Percent = (Files[Name]['Downloaded'] / Files[Name]['FileSize']) * 100;
-            socket.emit('Done', { 'Place' : Place, 'Percent' :  Percent});
+        var Place = Files[Name]['Downloaded'] / 1024000;
+            //var Percent = (Files[Name]['Downloaded'] / Files[Name]['FileSize']) * 100;
+            var inp = fs.createReadStream("Temp/" + Name);
+            var out = fs.createWriteStream("Files/" + Name);
+           inp.pipe(out);
+           inp.on('end',function(){
+               fs.unlink("Temp/"+Name,function(){
+                   console.log("Removed Temporary Files")
+               })
+           })
+            socket.emit('Done', { 'Place' : Place, 'Percent' :  100});
        
         fs.write(Files[Name]['Handler'], Files[Name]['Data'], null, 'Binary', function(err, Writen){
             //Get Thumbnail Here
         });
     }
-    else if(Files[Name]['Data'].length > 10485760){ //If the Data Buffer reaches 10MB
+    else if(Files[Name]['Data'].length > 10240000){ //If the Data Buffer reaches 10MB
         fs.write(Files[Name]['Handler'], Files[Name]['Data'], null, 'Binary', function(err, Writen){
             Files[Name]['Data'] = ""; //Reset The Buffer
-            var Place = Files[Name]['Downloaded'] / 524288;
+            var Place = Files[Name]['Downloaded'] / 1024000;
             var Percent = (Files[Name]['Downloaded'] / Files[Name]['FileSize']) * 100;
             socket.emit('MoreData', { 'Place' : Place, 'Percent' :  Percent});
         });
     }
     else
     {
-        var Place = Files[Name]['Downloaded'] / 524288;
+        var Place = Files[Name]['Downloaded'] / 1024000;
         console.log(Files[Name]['Downloaded'], Files[Name]['FileSize'])
         var Percent = (Files[Name]['Downloaded'] / Files[Name]['FileSize']) * 100;
         socket.emit('MoreData', { 'Place' : Place, 'Percent' :  Percent});
     }
 });
+
+socket.on('Terminate',(data)=>{
+    fs.unlink("Temp/" + data['Name'], function () { //This Deletes The Temporary File
+        console.log("Temp file deleted from server",data['Name'])
+    });
+})
 
     });
    

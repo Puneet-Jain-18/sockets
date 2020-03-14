@@ -16,7 +16,9 @@
     <div>
 		<button type = "button" id = "restartButton">Pause</button>
 		
-        <button type = "button" id = "resumeButton">Resume</button>
+		<button type = "button" id = "resumeButton">Resume</button>
+		
+        <button type = "button" id = "terminateButton">STOP</button>
     </div>
     <div id = "UploadArea2">
 
@@ -74,18 +76,22 @@
 		socket.disconnect();
 		socket.connect();
 	} );
+	document.getElementById('terminateButton').addEventListener('click',()=>{
+		socket.emit('Terminate',{'Name' : Name})
+		document.getElementById('UploadArea2').innerHTML = "File Transfer Terminated Successfully.";
+	} );
 
 	document.getElementById('resumeButton').addEventListener('click',StartUpload );
 	
     socket.on('MoreData', function (data){
 		console.log("REached More Dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 		UpdateBar(data['Percent']);
-		var Place = data['Place'] * 524288; //The Next Blocks Starting Position
+		var Place = data['Place'] * 1024000; //The Next Blocks Starting Position
 		var NewFile; //The Variable that will hold the new Block of Data
 		if(SelectedFile.webkitSlice) 
-			NewFile = SelectedFile.slice(Place, Place + Math.min(524288, (SelectedFile.size-Place)));
+			NewFile = SelectedFile.slice(Place, Place + Math.min(1024000, (SelectedFile.size-Place)));
 		else
-			NewFile = SelectedFile.slice(Place, Place + Math.min(524288, (SelectedFile.size-Place)));
+			NewFile = SelectedFile.slice(Place, Place + Math.min(1024000, (SelectedFile.size-Place)));
         FReader.readAsBinaryString(NewFile);
         console.log(data['Percent']);
 	});
